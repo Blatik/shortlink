@@ -48,6 +48,11 @@ form.addEventListener('submit', async (e) => {
 
     if (!url) return;
 
+    if (!isValidUrl(url)) {
+        alert('Please enter a valid URL (http:// or https://)');
+        return;
+    }
+
     // Reset state
     setLoading(true);
     resultDiv.style.display = 'none';
@@ -91,7 +96,7 @@ copyBtn.addEventListener('click', () => {
     document.execCommand('copy');
 
     const originalText = copyBtn.innerText;
-    copyBtn.innerText = '✅ Скопійовано!';
+    copyBtn.innerText = '✅ Copied!';
     setTimeout(() => {
         copyBtn.innerText = originalText;
     }, 2000);
@@ -126,9 +131,8 @@ function renderLinks(links) {
     linksList.innerHTML = '';
 
     if (links.length === 0) {
-        dashboard.style.display = 'none'; // Hide dashboard if no links (optional, or show empty state)
-        // Actually, let's show dashboard but with empty state if user has visited before?
-        // For now, show if links exist.
+        dashboard.style.display = 'block';
+        emptyState.style.display = 'block';
         return;
     }
 
@@ -137,12 +141,10 @@ function renderLinks(links) {
 
     links.forEach(link => {
         const row = document.createElement('tr');
-        const date = new Date(link.created_at).toLocaleDateString('uk-UA');
-        const shortUrl = `${API_URL.replace('/api', '')}/${link.short_code}`; // Construct URL roughly or use base_url if returned
+        const date = new Date(link.created_at).toLocaleDateString('en-US');
 
-        // Use base URL from env if possible, but here we construct it
-        // The API returns short_url in shorten response but not in list (yet).
-        // Let's assume the worker URL is the base.
+        // Construct full short URL
+        // Assuming BASE_URL is correct in backend response, but we can construct it too
         const fullShortUrl = `${API_URL.replace('https://', '').split('/')[0]}/${link.short_code}`;
 
         row.innerHTML = `
@@ -151,7 +153,7 @@ function renderLinks(links) {
             <td>${link.clicks}</td>
             <td>${date}</td>
             <td>
-                <button class="action-btn" onclick="copyLink('https://${fullShortUrl}')" title="Копіювати">📋</button>
+                <button class="action-btn" onclick="copyLink('https://${fullShortUrl}')" title="Copy">📋</button>
             </td>
         `;
         linksList.appendChild(row);
@@ -160,24 +162,11 @@ function renderLinks(links) {
 
 window.copyLink = (url) => {
     navigator.clipboard.writeText(url);
-    alert('Посилання скопійовано!');
+    alert('Link copied!');
 };
 
 refreshBtn.addEventListener('click', fetchUserLinks);
 
-// Initial load
-fetchUserLinks();
-setTimeout(() => {
-    copyBtn.textContent = originalText;
-    copyBtn.style.background = '';
-    // Fallback for older browsers
-    shortUrlInput.select();
-    document.execCommand('copy');
-    alert('Посилання скопійовано!');
-}
-});
-
-// Helper functions
 function isValidUrl(string) {
     try {
         const url = new URL(string);
@@ -187,29 +176,5 @@ function isValidUrl(string) {
     }
 }
 
-function showResult(shortUrl) {
-    shortUrlInput.value = shortUrl;
-    result.style.display = 'block';
-
-    // Smooth scroll to result
-    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function showError(message) {
-    alert('❌ ' + message);
-}
-
-function setLoading(loading) {
-    if (loading) {
-        btnText.style.display = 'none';
-        btnLoading.style.display = 'inline';
-        form.querySelector('button[type="submit"]').disabled = true;
-    } else {
-        btnText.style.display = 'inline';
-        btnLoading.style.display = 'none';
-        form.querySelector('button[type="submit"]').disabled = false;
-    }
-}
-
-// Auto-focus on URL input
-urlInput.focus();
+// Initial load
+fetchUserLinks();

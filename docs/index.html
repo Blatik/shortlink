@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Shortener - Швидке скорочення посилань 🔗</title>
-    <meta name="description"
-        content="Безкоштовний сервіс скорочення URL з аналітикою кліків. Створюйте короткі посилання за секунди!">
+    <title>URL Shortener - Shorten Links Fast 🔗</title>
+    <meta name="description" content="Free URL shortener with click analytics. Create short links in seconds!">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
 </head>
@@ -16,16 +15,16 @@
     <div class="container">
         <header class="hero">
             <h1>🔗 URL Shortener</h1>
-            <p class="subtitle">Скорочуйте посилання. Відстежуйте кліки. Заробляйте більше.</p>
+            <p class="subtitle">Shorten links. Track clicks. Free forever.</p>
         </header>
 
         <!-- Main Shortener Form -->
         <div class="shortener-card">
             <form id="shortenForm">
                 <div class="input-group">
-                    <input type="url" id="urlInput" placeholder="Вставте ваше довге посилання тут..." required>
+                    <input type="url" id="urlInput" placeholder="Paste your long link here..." required>
                     <button type="submit" class="btn-primary">
-                        <span class="btn-text">Скоротити</span>
+                        <span class="btn-text">Shorten</span>
                         <span class="btn-loading" style="display: none;">⏳</span>
                     </button>
                 </div>
@@ -33,7 +32,7 @@
                 <div class="advanced-options">
                     <label class="checkbox-label">
                         <input type="checkbox" id="customAliasToggle">
-                        <span>Власний alias</span>
+                        <span>Custom alias</span>
                     </label>
                     <input type="text" id="customAlias" placeholder="my-custom-link" style="display: none;"
                         pattern="[a-zA-Z0-9_-]{3,20}">
@@ -43,15 +42,15 @@
             <!-- Result Display -->
             <div id="result" class="result" style="display: none;">
                 <div class="result-content">
-                    <label>Ваше коротке посилання:</label>
+                    <label>Your short link:</label>
                     <div class="short-url-display">
                         <input type="text" id="shortUrlInput" readonly>
                         <button id="copyBtn" class="btn-copy">
-                            📋 Копіювати
+                            📋 Copy
                         </button>
                     </div>
                     <div class="result-stats">
-                        <span>✅ Створено успішно!</span>
+                        <span>✅ Created successfully!</span>
                     </div>
                 </div>
             </div>
@@ -60,24 +59,24 @@
         <!-- Dashboard Section (Hidden by default) -->
         <div id="dashboard" class="dashboard-section" style="display: none;">
             <div class="dashboard-header">
-                <h2>📊 Ваші посилання</h2>
-                <button id="refreshBtn" class="btn-outline-sm">🔄 Оновити</button>
+                <h2>📊 Your Links</h2>
+                <button id="refreshBtn" class="btn-outline-sm">🔄 Refresh</button>
             </div>
 
             <!-- AdSense Placeholder (Top) -->
             <div class="ad-placeholder">
-                <p>Реклама (Google AdSense)</p>
+                <p>Advertisement (Google AdSense)</p>
             </div>
 
             <div class="links-table-container">
                 <table class="links-table">
                     <thead>
                         <tr>
-                            <th>Коротке</th>
-                            <th>Оригінал</th>
-                            <th>Кліки</th>
-                            <th>Дата</th>
-                            <th>Дії</th>
+                            <th>Short</th>
+                            <th>Original</th>
+                            <th>Clicks</th>
+                            <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="linksList">
@@ -85,13 +84,13 @@
                     </tbody>
                 </table>
                 <div id="emptyState" class="empty-state" style="display: none;">
-                    <p>У вас ще немає скорочених посилань. Створіть перше вище! 👆</p>
+                    <p>You haven't created any links yet. Create your first one above! 👆</p>
                 </div>
             </div>
 
             <!-- AdSense Placeholder (Bottom) -->
             <div class="ad-placeholder">
-                <p>Реклама (Google AdSense)</p>
+                <p>Advertisement (Google AdSense)</p>
             </div>
         </div>
 
@@ -99,28 +98,28 @@
         <div class="features">
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h3>Блискавична швидкість</h3>
-                <p>Редіректи за <50мс завдяки Cloudflare Workers</p>
+                <h3>Lightning Fast</h3>
+                <p>Redirects in <50ms thanks to Cloudflare Workers</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📊</div>
-                <h3>Детальна статистика</h3>
-                <p>Відстежуйте кількість переходів по кожному посиланню</p>
+                <h3>Detailed Stats</h3>
+                <p>Track click counts for every link you create</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">💰</div>
-                <h3>100% Безкоштовно</h3>
-                <p>Ніяких підписок. Користуйтесь без обмежень.</p>
+                <h3>100% Free</h3>
+                <p>No subscriptions. Use without limits.</p>
             </div>
         </div>
 
         <!-- Footer -->
         <footer>
-            <p>Створено з 🦀 Rust + Cloudflare Workers</p>
+            <p>Built with 🦀 Rust + Cloudflare Workers</p>
             <div class="footer-links">
-                <a href="#api">API Документація</a>
-                <a href="#privacy">Конфіденційність</a>
-                <a href="#terms">Умови використання</a>
+                <a href="#api">API Docs</a>
+                <a href="#privacy">Privacy</a>
+                <a href="#terms">Terms</a>
             </div>
         </footer>
     </div>

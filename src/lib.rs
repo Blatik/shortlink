@@ -139,19 +139,28 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
 
     // Store in D1 database (for Dashboard)
     let db = ctx.env.d1("DB")?;
-    db.prepare(
+    let d1_result = db.prepare(
         "INSERT INTO urls (id, short_code, original_url, user_id, created_at, clicks) VALUES (?, ?, ?, ?, ?, ?)"
     )
     .bind(&[
         url.id.clone().into(),
         url.short_code.clone().into(),
         url.original_url.clone().into(),
-        user_id.into(),
+        user_id.clone().unwrap_or("anonymous".to_string()).into(),
         url.created_at.clone().into(),
         0.into(),
     ])?
     .run()
-    .await?;
+    .await;
+
+    if let Err(e) = d1_result {
+        console_log!("D1 Error: {}", e);
+        // Fallback: if D1 fails, we still return the short URL (it's in KV)
+        // But ideally we want to know. For now, let's return error to debug.
+        return Response::from_json(&ErrorResponse {
+            error: format!("Database error: {}", e),
+        });
+    }
 
     // Get base URL
     let base_url = ctx.var("BASE_URL")?.to_string();

@@ -8,11 +8,51 @@ use utils::{generate_short_code, generate_uuid, is_valid_url, is_valid_alias, cu
 #[event(fetch)]
 async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     let router = Router::new();
+    
+    // CORS configuration
+    let cors = Cors::new()
+        .with_origins(vec!["*"])
+        .with_methods(Method::all())
+        .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
 
     router
         // API endpoints
         .post_async("/api/shorten", |mut req, ctx| async move {
-            handle_shorten(req, ctx).await
+            let cors = Cors::new()
+                .with_origins(vec!["*"])
+                .with_methods(Method::all())
+                .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
+            
+            match handle_shorten(req, ctx).await {
+                Ok(resp) => resp.with_cors(&cors),
+                Err(e) => Err(e),
+            }
+        })
+        // Preflight for shorten
+        .options("/api/shorten", |_, _| {
+            let cors = Cors::new()
+                .with_origins(vec!["*"])
+                .with_methods(Method::all())
+                .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
+            Response::empty()?.with_cors(&cors)
+        })
+        .get_async("/api/urls", |req, ctx| async move {
+            let cors = Cors::new()
+                .with_origins(vec!["*"])
+                .with_methods(Method::all())
+                .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
+            
+            match handle_list_urls(req, ctx).await {
+                Ok(resp) => resp.with_cors(&cors),
+                Err(e) => Err(e),
+            }
+        })
+        .options("/api/urls", |_, _| {
+             let cors = Cors::new()
+                .with_origins(vec!["*"])
+                .with_methods(Method::all())
+                .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
+            Response::empty()?.with_cors(&cors)
         })
         .get_async("/:code", |req, ctx| async move {
             handle_redirect(req, ctx).await
@@ -42,6 +82,9 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
         });
     }
 
+    // Get User ID from header (or anonymous)
+    let user_id = req.headers().get("X-User-ID").ok().flatten().or(Some("anonymous".to_string()));
+
     // Get KV namespace
     let kv = ctx.kv("URLS")?;
     
@@ -63,16 +106,16 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
 
         alias
     } else {
-        // Generate unique short code
-        let mut code = generate_short_code(6);
+        // Generate unique short code (Start with 4 chars for shorter links)
+        let mut code = generate_short_code(4);
         let mut attempts = 0;
 
         while kv.get(&code).text().await?.is_some() {
             attempts += 1;
-            code = if attempts > 10 {
-                generate_short_code(7)
+            code = if attempts > 5 {
+                generate_short_code(5) // Increase length if collision
             } else {
-                generate_short_code(6)
+                generate_short_code(4)
             };
         }
 
@@ -84,7 +127,7 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
         id: generate_uuid(),
         short_code: short_code.clone(),
         original_url: body.url.clone(),
-        user_id: None,
+        user_id: user_id.clone(),
         created_at: current_timestamp(),
         expires_at: None,
         clicks: 0,
@@ -93,6 +136,22 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
     // Store in KV
     let url_json = serde_json::to_string(&url)?;
     kv.put(&short_code, url_json)?.execute().await?;
+
+    // Store in D1 database (for Dashboard)
+    let db = ctx.env.d1("DB")?;
+    db.prepare(
+        "INSERT INTO urls (id, short_code, original_url, user_id, created_at, clicks) VALUES (?, ?, ?, ?, ?, ?)"
+    )
+    .bind(&[
+        url.id.clone().into(),
+        url.short_code.clone().into(),
+        url.original_url.clone().into(),
+        user_id.into(),
+        url.created_at.clone().into(),
+        0.into(),
+    ])?
+    .run()
+    .await?;
 
     // Get base URL
     let base_url = ctx.var("BASE_URL")?.to_string();
@@ -104,6 +163,22 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
         short_code: url.short_code,
         original_url: url.original_url,
     })
+}
+
+async fn handle_list_urls(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let user_id = match req.headers().get("X-User-ID")? {
+        Some(id) => id,
+        None => return Response::error("User ID required", 400),
+    };
+
+    let db = ctx.env.d1("DB")?;
+    let result = db
+        .prepare("SELECT * FROM urls WHERE user_id = ? ORDER BY created_at DESC LIMIT 50")
+        .bind(&[user_id.into()])?
+        .all()
+        .await?;
+
+    Response::from_json(&result.results::<Url>()?)
 }
 
 async fn handle_redirect(req: Request, ctx: RouteContext<()>) -> Result<Response> {

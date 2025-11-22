@@ -1,4 +1,3 @@
-```javascript
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App initialized");
 
@@ -13,9 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultDiv = document.getElementById('result');
     const shortUrlInput = document.getElementById('shortUrlInput');
     const copyBtn = document.getElementById('copyBtn');
-    const submitBtn = form ? form.querySelector('button[type="submit"]') : null; // Added null check for form
-    const btnText = submitBtn ? submitBtn.querySelector('.btn-text') : null; // Added null check for submitBtn
-    const btnLoading = submitBtn ? submitBtn.querySelector('.btn-loading') : null; // Added null check for submitBtn
+    const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+    const btnText = submitBtn ? submitBtn.querySelector('.btn-text') : null;
+    const btnLoading = submitBtn ? submitBtn.querySelector('.btn-loading') : null;
 
     // Dashboard elements
     const dashboard = document.getElementById('dashboard');
@@ -32,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = parseJwt(googleToken);
             return payload.sub;
         }
-        
+
         // Otherwise use local anonymous ID
         let userId = localStorage.getItem('user_id');
         if (!userId) {
@@ -50,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.handleCredentialResponse = (response) => {
         console.log("Encoded JWT ID token: " + response.credential);
         googleToken = response.credential;
-        
+
         const payload = parseJwt(googleToken);
         console.log("User:", payload);
 
@@ -59,10 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const userProfile = document.getElementById('userProfile');
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
-        
-        userProfile.style.display = 'flex';
-        userAvatar.src = payload.picture;
-        userName.textContent = payload.name;
+
+        if (userProfile) {
+            userProfile.style.display = 'flex';
+            if (userAvatar) userAvatar.src = payload.picture;
+            if (userName) userName.textContent = payload.name;
+        }
 
         // Refresh dashboard for this user
         fetchUserLinks();
@@ -74,24 +75,30 @@ document.addEventListener('DOMContentLoaded', () => {
         signOutBtn.addEventListener('click', () => {
             googleToken = null;
             document.querySelector('.g_id_signin').style.display = 'block';
-            document.getElementById('userProfile').style.display = 'none';
+            const userProfile = document.getElementById('userProfile');
+            if (userProfile) userProfile.style.display = 'none';
             fetchUserLinks(); // Switch back to anonymous
         });
     }
 
     // JWT Parser
-    function parseJwt (token) {
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+    function parseJwt(token) {
+        try {
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
 
-        return JSON.parse(jsonPayload);
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error("Error parsing JWT", e);
+            return {};
+        }
     }
 
     // Toggle custom alias input
-    if (customAliasToggle && customAliasInput) { // Added null check for customAliasInput
+    if (customAliasToggle && customAliasInput) {
         customAliasToggle.addEventListener('change', () => {
             customAliasInput.style.display = customAliasToggle.checked ? 'block' : 'none';
             if (customAliasToggle.checked) {
@@ -101,13 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle form submission
-    if (form && urlInput && resultDiv && shortUrlInput) { // Added null checks for form elements
+    if (form && urlInput && resultDiv && shortUrlInput) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             console.log("Form submitted");
-            
+
             const url = urlInput.value.trim();
-            const customAlias = customAliasToggle && customAliasInput && customAliasToggle.checked ? customAliasInput.value.trim() : null; // Added null checks
+            const customAlias = customAliasToggle && customAliasInput && customAliasToggle.checked ? customAliasInput.value.trim() : null;
 
             if (!url) return;
 
@@ -127,12 +134,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Send appropriate ID
                 if (googleToken) {
-                    headers['Authorization'] = `Bearer ${ googleToken } `;
+                    headers['Authorization'] = `Bearer ${googleToken}`;
                 } else {
                     headers['X-User-ID'] = getUserId();
                 }
 
-                const response = await fetch(`${ API_URL } /api/shorten`, {
+                const response = await fetch(`${API_URL}/api/shorten`, {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify({
@@ -150,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show result
                 shortUrlInput.value = data.short_url;
                 resultDiv.style.display = 'block';
-                
+
                 // Refresh dashboard
                 fetchUserLinks();
 
@@ -164,11 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Copy to clipboard
-    if (copyBtn && shortUrlInput) { // Added null check for shortUrlInput
+    if (copyBtn && shortUrlInput) {
         copyBtn.addEventListener('click', () => {
             shortUrlInput.select();
             document.execCommand('copy');
-            
+
             const originalText = copyBtn.innerText;
             copyBtn.innerText = '✅ Copied!';
             setTimeout(() => {
@@ -191,12 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const headers = {};
             if (googleToken) {
-                headers['Authorization'] = `Bearer ${ googleToken } `;
+                headers['Authorization'] = `Bearer ${googleToken}`;
             } else {
                 headers['X-User-ID'] = getUserId();
             }
 
-            const response = await fetch(`${ API_URL } /api/urls`, {
+            const response = await fetch(`${API_URL}/api/urls`, {
                 headers: headers
             });
 
@@ -212,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderLinks(links) {
         if (!linksList) return;
         linksList.innerHTML = '';
-        
+
         if (links.length === 0) {
             if (dashboard) dashboard.style.display = 'block';
             if (emptyState) emptyState.style.display = 'block';
@@ -225,10 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
         links.forEach(link => {
             const row = document.createElement('tr');
             const date = new Date(link.created_at).toLocaleDateString('en-US');
-            
-            const fullShortUrl = `${ API_URL.replace('https://', '').split('/')[0] }/${link.short_code}`;
 
-row.innerHTML = `
+            const fullShortUrl = `${API_URL.replace('https://', '').split('/')[0]}/${link.short_code}`;
+
+            row.innerHTML = `
                 <td><a href="https://${fullShortUrl}" target="_blank" class="short-link">${link.short_code}</a></td>
                 <td><span class="original-link" title="${link.original_url}">${link.original_url}</span></td>
                 <td>${link.clicks}</td>
@@ -237,40 +244,39 @@ row.innerHTML = `
                     <button class="action-btn" onclick="copyLink('https://${fullShortUrl}')" title="Copy">📋</button>
                 </td>
             `;
-linksList.appendChild(row);
+            linksList.appendChild(row);
         });
     }
 
-window.copyLink = (url) => {
-    if (navigator.clipboard) { // Check if clipboard API is available
-        navigator.clipboard.writeText(url);
-        alert('Link copied!');
-    } else {
-        // Fallback for older browsers
-        const tempInput = document.createElement('input');
-        document.body.appendChild(tempInput);
-        tempInput.value = url;
-        tempInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
-        alert('Link copied!');
+    window.copyLink = (url) => {
+        if (navigator.clipboard) { // Check if clipboard API is available
+            navigator.clipboard.writeText(url);
+            alert('Link copied!');
+        } else {
+            // Fallback for older browsers
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = url;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('Link copied!');
+        }
+    };
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', fetchUserLinks);
     }
-};
 
-if (refreshBtn) {
-    refreshBtn.addEventListener('click', fetchUserLinks);
-}
-
-function isValidUrl(string) {
-    try {
-        const url = new URL(string);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-        return false;
+    function isValidUrl(string) {
+        try {
+            const url = new URL(string);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch {
+            return false;
+        }
     }
-}
 
-// Initial load
-fetchUserLinks();
+    // Initial load
+    fetchUserLinks();
 });
-```

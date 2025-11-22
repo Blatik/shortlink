@@ -54,6 +54,17 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
             Response::empty()?.with_cors(&cors)
         })
+        .get_async("/api/analytics/:code", |req, ctx| async move {
+            let cors = Cors::new()
+                .with_origins(vec!["*"])
+                .with_methods(Method::all())
+                .with_allowed_headers(vec!["Content-Type", "X-User-ID"]);
+            
+            match handle_analytics(req, ctx).await {
+                Ok(resp) => resp.with_cors(&cors),
+                Err(e) => Err(e),
+            }
+        })
         .get_async("/:code", |req, ctx| async move {
             handle_redirect(req, ctx).await
         })
@@ -203,6 +214,86 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
     })
 }
 
+async fn handle_analytics(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let short_code = match ctx.param("code") {
+        Some(code) => code,
+        None => return Response::error("Short code required", 400),
+    };
+
+    let db = ctx.env.d1("DB")?;
+
+    // Get total clicks
+    let total_result = db.prepare("SELECT COUNT(*) as total FROM clicks WHERE short_code = ?")
+        .bind(&[short_code.into()])?
+        .first::<serde_json::Value>(None)
+        .await?;
+    
+    let total_clicks = if let Some(v) = total_result {
+        v.get("total").and_then(|t| t.as_i64()).unwrap_or(0)
+    } else {
+        0
+    };
+
+    // Get clicks by country
+    let countries_result = db.prepare(
+        "SELECT country, COUNT(*) as count FROM clicks WHERE short_code = ? GROUP BY country ORDER BY count DESC LIMIT 10"
+    )
+    .bind(&[short_code.into()])?
+    .all()
+    .await?;
+
+    let countries: Vec<serde_json::Value> = countries_result.results()?;
+
+    // Get clicks by device
+    let devices_result = db.prepare(
+        "SELECT device_type, COUNT(*) as count FROM clicks WHERE short_code = ? GROUP BY device_type"
+    )
+    .bind(&[short_code.into()])?
+    .all()
+    .await?;
+
+    let devices: Vec<serde_json::Value> = devices_result.results()?;
+
+    // Get clicks by browser
+    let browsers_result = db.prepare(
+        "SELECT browser, COUNT(*) as count FROM clicks WHERE short_code = ? GROUP BY browser ORDER BY count DESC LIMIT 10"
+    )
+    .bind(&[short_code.into()])?
+    .all()
+    .await?;
+
+    let browsers: Vec<serde_json::Value> = browsers_result.results()?;
+
+    // Get clicks over time (last 30 days)
+    let timeline_result = db.prepare(
+        "SELECT DATE(clicked_at) as date, COUNT(*) as count FROM clicks WHERE short_code = ? AND clicked_at >= datetime('now', '-30 days') GROUP BY DATE(clicked_at) ORDER BY date"
+    )
+    .bind(&[short_code.into()])?
+    .all()
+    .await?;
+
+    let timeline: Vec<serde_json::Value> = timeline_result.results()?;
+
+    // Get top referrers
+    let referrers_result = db.prepare(
+        "SELECT referrer, COUNT(*) as count FROM clicks WHERE short_code = ? GROUP BY referrer ORDER BY count DESC LIMIT 10"
+    )
+    .bind(&[short_code.into()])?
+    .all()
+    .await?;
+
+    let referrers: Vec<serde_json::Value> = referrers_result.results()?;
+
+    Response::from_json(&serde_json::json!({
+        "total_clicks": total_clicks,
+        "countries": countries,
+        "devices": devices,
+        "browsers": browsers,
+        "timeline": timeline,
+        "referrers": referrers
+    }))
+}
+
 async fn handle_list_urls(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     // Get User ID from header
     let user_id = if let Some(auth_header) = req.headers().get("Authorization").ok().flatten() {
@@ -272,6 +363,96 @@ async fn handle_redirect(req: Request, ctx: RouteContext<()>) -> Result<Response
         }
     }
 
+    // Extract analytics data from headers
+    let country = req.headers().get("CF-IPCountry").ok().flatten().unwrap_or("Unknown".to_string());
+    let city = req.headers().get("CF-IPCity").ok().flatten().unwrap_or("Unknown".to_string());
+    let user_agent = req.headers().get("User-Agent").ok().flatten().unwrap_or("Unknown".to_string());
+    let referrer = req.headers().get("Referer").ok().flatten().unwrap_or("Direct".to_string());
+    
+    // Parse User-Agent for device/browser/OS
+    let (device_type, browser, os) = parse_user_agent(&user_agent);
+    
+    // Hash IP for privacy (Cloudflare provides CF-Connecting-IP)
+    let ip = req.headers().get("CF-Connecting-IP").ok().flatten().unwrap_or("0.0.0.0".to_string());
+    let ip_hash = format!("{:x}", md5::compute(ip.as_bytes()));
+
+    // Store analytics asynchronously (don't block redirect)
+    let db = ctx.env.d1("DB")?;
+    let click_id = generate_uuid();
+    let clicked_at = current_timestamp();
+    
+    // Fire and forget analytics insert
+    let _ = db.prepare(
+        "INSERT INTO clicks (id, short_code, clicked_at, country, city, device_type, browser, os, referrer, ip_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    )
+    .bind(&[
+        click_id.into(),
+        short_code.to_string().into(),
+        clicked_at.into(),
+        country.into(),
+        city.into(),
+        device_type.into(),
+        browser.into(),
+        os.into(),
+        referrer.into(),
+        ip_hash.into(),
+    ])?
+    .run()
+    .await;
+
+    // Update click count in D1
+    let _ = db.prepare("UPDATE urls SET clicks = clicks + 1 WHERE short_code = ?")
+        .bind(&[short_code.into()])?
+        .run()
+        .await;
+
     // Perform redirect
     Response::redirect(url::Url::parse(&url.original_url)?)
 }
+
+// Helper function to parse User-Agent
+fn parse_user_agent(ua: &str) -> (String, String, String) {
+    let ua_lower = ua.to_lowercase();
+    
+    // Detect device type
+    let device = if ua_lower.contains("mobile") || ua_lower.contains("android") || ua_lower.contains("iphone") {
+        "Mobile"
+    } else if ua_lower.contains("tablet") || ua_lower.contains("ipad") {
+        "Tablet"
+    } else {
+        "Desktop"
+    }.to_string();
+    
+    // Detect browser
+    let browser = if ua_lower.contains("edg") {
+        "Edge"
+    } else if ua_lower.contains("chrome") {
+        "Chrome"
+    } else if ua_lower.contains("safari") && !ua_lower.contains("chrome") {
+        "Safari"
+    } else if ua_lower.contains("firefox") {
+        "Firefox"
+    } else if ua_lower.contains("opera") || ua_lower.contains("opr") {
+        "Opera"
+    } else {
+        "Other"
+    }.to_string();
+    
+    // Detect OS
+    let os = if ua_lower.contains("windows") {
+        "Windows"
+    } else if ua_lower.contains("mac") {
+        "macOS"
+    } else if ua_lower.contains("linux") {
+        "Linux"
+    } else if ua_lower.contains("android") {
+        "Android"
+    } else if ua_lower.contains("ios") || ua_lower.contains("iphone") || ua_lower.contains("ipad") {
+        "iOS"
+    } else {
+        "Other"
+    }.to_string();
+    
+    (device, browser, os)
+}
+

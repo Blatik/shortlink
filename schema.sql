@@ -1,35 +1,33 @@
--- Database schema for URL Shortener
-
--- Drop tables if they exist (for clean reset)
-DROP TABLE IF EXISTS subscriptions;
-DROP TABLE IF EXISTS clicks;
-DROP TABLE IF EXISTS urls;
-DROP TABLE IF EXISTS users;
+-- URL Shortener Database Schema
 
 -- URLs table
-CREATE TABLE urls (
-  id TEXT PRIMARY KEY,
-  short_code TEXT UNIQUE NOT NULL,
-  original_url TEXT NOT NULL,
-  user_id TEXT, -- Anonymous User ID from LocalStorage
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  clicks INTEGER DEFAULT 0
+CREATE TABLE IF NOT EXISTS urls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    short_code TEXT UNIQUE NOT NULL,
+    original_url TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    clicks INTEGER DEFAULT 0
 );
 
--- Clicks table for analytics
-CREATE TABLE clicks (
-  id TEXT PRIMARY KEY,
-  url_id TEXT NOT NULL,
-  clicked_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  ip_address TEXT,
-  user_agent TEXT,
-  referer TEXT,
-  country TEXT,
-  FOREIGN KEY (url_id) REFERENCES urls(id)
+CREATE INDEX IF NOT EXISTS idx_urls_short_code ON urls(short_code);
+CREATE INDEX IF NOT EXISTS idx_urls_user_id ON urls(user_id);
+
+-- Detailed clicks table for analytics
+CREATE TABLE IF NOT EXISTS clicks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    short_code TEXT NOT NULL,
+    clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    country TEXT,
+    city TEXT,
+    device_type TEXT,
+    browser TEXT,
+    os TEXT,
+    referrer TEXT,
+    ip_hash TEXT,
+    FOREIGN KEY (short_code) REFERENCES urls(short_code) ON DELETE CASCADE
 );
 
--- Indexes for performance
-CREATE INDEX idx_urls_short_code ON urls(short_code);
-CREATE INDEX idx_urls_user_id ON urls(user_id);
-CREATE INDEX idx_clicks_url_id ON clicks(url_id);
-CREATE INDEX idx_clicks_clicked_at ON clicks(clicked_at);
+CREATE INDEX IF NOT EXISTS idx_clicks_short_code ON clicks(short_code);
+CREATE INDEX IF NOT EXISTS idx_clicks_timestamp ON clicks(clicked_at);
+CREATE INDEX IF NOT EXISTS idx_clicks_country ON clicks(country);

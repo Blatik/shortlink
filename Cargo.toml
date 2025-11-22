@@ -17,6 +17,7 @@ url = "2.5"
 base64 = "0.21"
 sha2 = "0.10"
 rand = "0.8"
+md5 = "0.7"
 getrandom = { version = "0.2", features = ["js"] }
 
 [profile.release]

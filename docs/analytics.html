@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - URL Shortener</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="analytics.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header class="analytics-header">
+            <a href="index.html" class="back-btn">← Back to Dashboard</a>
+            <h1>📊 Link Analytics</h1>
+            <p class="short-link-display" id="shortLinkDisplay"></p>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👆</div>
+                <div class="stat-content">
+                    <h3 id="totalClicks">0</h3>
+                    <p>Total Clicks</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🌍</div>
+                <div class="stat-content">
+                    <h3 id="topCountry">-</h3>
+                    <p>Top Country</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📱</div>
+                <div class="stat-content">
+                    <h3 id="topDevice">-</h3>
+                    <p>Top Device</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🌐</div>
+                <div class="stat-content">
+                    <h3 id="topBrowser">-</h3>
+                    <p>Top Browser</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Timeline Chart -->
+            <div class="chart-card full-width">
+                <h3>📈 Clicks Over Time (Last 30 Days)</h3>
+                <canvas id="timelineChart"></canvas>
+            </div>
+
+            <!-- Device Chart -->
+            <div class="chart-card">
+                <h3>📱 Device Types</h3>
+                <canvas id="deviceChart"></canvas>
+            </div>
+
+            <!-- Browser Chart -->
+            <div class="chart-card">
+                <h3>🌐 Browsers</h3>
+                <canvas id="browserChart"></canvas>
+            </div>
+
+            <!-- Country Chart -->
+            <div class="chart-card full-width">
+                <h3>🌍 Top Countries</h3>
+                <canvas id="countryChart"></canvas>
+            </div>
+
+            <!-- Referrers Table -->
+            <div class="chart-card full-width">
+                <h3>🔗 Top Referrers</h3>
+                <div class="referrers-table" id="referrersTable">
+                    <p class="empty-state">No referrer data available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="analytics.js"></script>
+</body>
+
+</html>

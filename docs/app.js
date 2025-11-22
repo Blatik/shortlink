@@ -242,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${date}</td>
                 <td>
                     <button class="action-btn" onclick="copyLink('https://${fullShortUrl}')" title="Copy">📋</button>
+                    <a href="analytics.html?code=${link.short_code}" class="action-btn" title="Analytics">📊</a>
                 </td>
             `;
             linksList.appendChild(row);

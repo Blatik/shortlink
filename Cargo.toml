@@ -11,6 +11,7 @@ worker = { version = "0.3.0", features = ["d1"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.11", features = ["json"] }
 uuid = { version = "1.6", features = ["v4", "serde", "js"] }
 url = "2.5"
 base64 = "0.21"

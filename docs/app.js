@@ -24,7 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refreshBtn');
 
     // User ID Management
+    let googleToken = null;
+
     function getUserId() {
+        // If signed in with Google, use the sub (Subject ID) from token
+        if (googleToken) {
+            const payload = parseJwt(googleToken);
+            return payload.sub;
+        }
+        
+        // Otherwise use local anonymous ID
         let userId = localStorage.getItem('user_id');
         if (!userId) {
             if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -37,7 +46,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return userId;
     }
 
-    const USER_ID = getUserId();
+    // Google Auth Callback (Global function for GSI)
+    window.handleCredentialResponse = (response) => {
+        console.log("Encoded JWT ID token: " + response.credential);
+        googleToken = response.credential;
+        
+        const payload = parseJwt(googleToken);
+        console.log("User:", payload);
+
+        // Update UI
+        document.querySelector('.g_id_signin').style.display = 'none';
+        const userProfile = document.getElementById('userProfile');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        
+        userProfile.style.display = 'flex';
+        userAvatar.src = payload.picture;
+        userName.textContent = payload.name;
+
+        // Refresh dashboard for this user
+        fetchUserLinks();
+    };
+
+    // Sign Out
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) {
+        signOutBtn.addEventListener('click', () => {
+            googleToken = null;
+            document.querySelector('.g_id_signin').style.display = 'block';
+            document.getElementById('userProfile').style.display = 'none';
+            fetchUserLinks(); // Switch back to anonymous
+        });
+    }
+
+    // JWT Parser
+    function parseJwt (token) {
+        var base64Url = token.split('.')[1];
+        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    }
 
     // Toggle custom alias input
     if (customAliasToggle && customAliasInput) { // Added null check for customAliasInput
@@ -70,12 +121,20 @@ document.addEventListener('DOMContentLoaded', () => {
             resultDiv.style.display = 'none';
 
             try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                // Send appropriate ID
+                if (googleToken) {
+                    headers['Authorization'] = `Bearer ${ googleToken } `;
+                } else {
+                    headers['X-User-ID'] = getUserId();
+                }
+
                 const response = await fetch(`${ API_URL } /api/shorten`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-User-ID': USER_ID
-                    },
+                    headers: headers,
                     body: JSON.stringify({
                         url: url,
                         custom_alias: customAlias
@@ -130,10 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dashboard Functions
     async function fetchUserLinks() {
         try {
+            const headers = {};
+            if (googleToken) {
+                headers['Authorization'] = `Bearer ${ googleToken } `;
+            } else {
+                headers['X-User-ID'] = getUserId();
+            }
+
             const response = await fetch(`${ API_URL } /api/urls`, {
-                headers: {
-                    'X-User-ID': USER_ID
-                }
+                headers: headers
             });
 
             if (!response.ok) return;

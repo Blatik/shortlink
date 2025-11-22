@@ -82,8 +82,37 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
         });
     }
 
-    // Get User ID from header (or anonymous)
-    let user_id = req.headers().get("X-User-ID").ok().flatten().or(Some("anonymous".to_string()));
+    // Get User ID from header
+    let user_id = if let Some(auth_header) = req.headers().get("Authorization").ok().flatten() {
+        if auth_header.starts_with("Bearer ") {
+            let token = &auth_header[7..];
+            // Verify token with Google
+            let client = reqwest::Client::new();
+            let res = client.get("https://oauth2.googleapis.com/tokeninfo")
+                .query(&[("id_token", token)])
+                .send()
+                .await;
+
+            match res {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        let json: serde_json::Value = response.json().await.unwrap_or(serde_json::json!({}));
+                        json["sub"].as_str().map(|s| s.to_string())
+                    } else {
+                        None
+                    }
+                },
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    } else {
+        req.headers().get("X-User-ID").ok().flatten()
+    };
+    
+    // Default to anonymous if no valid ID found
+    let user_id = user_id.or(Some("anonymous".to_string()));
 
     // Get KV namespace
     let kv = ctx.kv("URLS")?;
@@ -175,7 +204,36 @@ async fn handle_shorten(mut req: Request, ctx: RouteContext<()>) -> Result<Respo
 }
 
 async fn handle_list_urls(req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let user_id = match req.headers().get("X-User-ID")? {
+    // Get User ID from header
+    let user_id = if let Some(auth_header) = req.headers().get("Authorization").ok().flatten() {
+        if auth_header.starts_with("Bearer ") {
+            let token = &auth_header[7..];
+            // Verify token with Google
+            let client = reqwest::Client::new();
+            let res = client.get("https://oauth2.googleapis.com/tokeninfo")
+                .query(&[("id_token", token)])
+                .send()
+                .await;
+
+            match res {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        let json: serde_json::Value = response.json().await.unwrap_or(serde_json::json!({}));
+                        json["sub"].as_str().map(|s| s.to_string())
+                    } else {
+                        None
+                    }
+                },
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    } else {
+        req.headers().get("X-User-ID").ok().flatten()
+    };
+
+    let user_id = match user_id {
         Some(id) => id,
         None => return Response::error("User ID required", 400),
     };

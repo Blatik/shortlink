@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("App initialized");
 
     // API endpoint
-    const API_URL = 'https://url-shortener.blatik-short.workers.dev';
+    const API_URL = 'https://s.blatik-short.workers.dev';
 
     // DOM elements
     const form = document.getElementById('shortenForm');

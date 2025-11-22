@@ -4,146 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Shortener - Shorten Links Fast 🔗</title>
-    <meta name="description" content="Free URL shortener with click analytics. Create short links in seconds!">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="dashboard.css">
-</head>
+    <title>URL Shortener - Rust Edition 🦀</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/dashboard.css">
+    <link rel="stylesheet" href="/charts.css">
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="modulepreload" href="/shortlink/url-shortener-frontend-5c131e3c568d0019.js" crossorigin="anonymous" integrity="sha384-kekE6BbHtFl40MGNjnHFU0GSor5Qp8J5qpcecovZI4whzWC4LBolqXbKe/2zPrER"><link rel="preload" href="/shortlink/url-shortener-frontend-5c131e3c568d0019_bg.wasm" crossorigin="anonymous" integrity="sha384-kufPq4EAsLkDFpXVRFtb2IzV2Z0wRV2PVo1GEi9zPeqG+x93b399Db23S7EiPDAL" as="fetch" type="application/wasm"></head>
 
 <body>
-    <!-- Hero Section -->
-    <div class="container">
-        <header class="hero">
-            <h1>🔗 URL Shortener</h1>
-            <p class="subtitle">Shorten links. Track clicks. Free forever.</p>
+    <!-- App will be mounted here -->
 
-            <!-- Auth Section -->
-            <div id="authSection" class="auth-section">
-                <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE"
-                    data-callback="handleCredentialResponse" data-auto_prompt="false">
-                </div>
-                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"
-                    data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left">
-                </div>
+<script type="module">
+import init, * as bindings from '/shortlink/url-shortener-frontend-5c131e3c568d0019.js';
+const wasm = await init({ module_or_path: '/shortlink/url-shortener-frontend-5c131e3c568d0019_bg.wasm' });
 
-                <div id="userProfile" style="display: none;" class="user-profile">
-                    <img id="userAvatar" src="" alt="Avatar" class="user-avatar">
-                    <span id="userName">User</span>
-                    <button id="signOutBtn" class="btn-outline-sm">Sign Out</button>
-                </div>
-            </div>
-        </header>
 
-        <!-- Main Shortener Form -->
-        <div class="shortener-card">
-            <form id="shortenForm">
-                <div class="input-group">
-                    <input type="url" id="urlInput" placeholder="Paste your long link here..." required>
-                    <button type="submit" class="btn-primary">
-                        <span class="btn-text">Shorten</span>
-                        <span class="btn-loading" style="display: none;">⏳</span>
-                    </button>
-                </div>
+window.wasmBindings = bindings;
 
-                <div class="advanced-options">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="customAliasToggle">
-                        <span>Custom alias</span>
-                    </label>
-                    <input type="text" id="customAlias" placeholder="my-custom-link" style="display: none;"
-                        pattern="[a-zA-Z0-9_-]{3,20}">
-                </div>
-            </form>
 
-            <!-- Result Display -->
-            <div id="result" class="result" style="display: none;">
-                <div class="result-content">
-                    <label>Your short link:</label>
-                    <div class="short-url-display">
-                        <input type="text" id="shortUrlInput" readonly>
-                        <button id="copyBtn" class="btn-copy">
-                            📋 Copy
-                        </button>
-                    </div>
-                    <div class="result-stats">
-                        <span>✅ Created successfully!</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
-        <!-- Dashboard Section (Hidden by default) -->
-        <div id="dashboard" class="dashboard-section" style="display: none;">
-            <div class="dashboard-header">
-                <h2>📊 Your Links</h2>
-                <button id="refreshBtn" class="btn-outline-sm">🔄 Refresh</button>
-            </div>
-
-            <!-- AdSense Placeholder (Top) -->
-            <div class="ad-placeholder">
-                <p>Advertisement (Google AdSense)</p>
-            </div>
-
-            <div class="links-table-container">
-                <table class="links-table">
-                    <thead>
-                        <tr>
-                            <th>Short</th>
-                            <th>Original</th>
-                            <th>Clicks</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="linksList">
-                        <!-- Links will be injected here -->
-                    </tbody>
-                </table>
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <p>You haven't created any links yet. Create your first one above! 👆</p>
-                </div>
-            </div>
-
-            <!-- AdSense Placeholder (Bottom) -->
-            <div class="ad-placeholder">
-                <p>Advertisement (Google AdSense)</p>
-            </div>
-        </div>
-
-        <!-- Features Section -->
-        <div class="features">
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>Lightning Fast</h3>
-                <p>Redirects in <50ms thanks to Cloudflare Workers</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Detailed Stats</h3>
-                <p>Track click counts for every link you create</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">💰</div>
-                <h3>100% Free</h3>
-                <p>No subscriptions. Use without limits.</p>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <footer>
-            <p>Built with 🦀 Rust + Cloudflare Workers</p>
-            <div class="footer-links">
-                <a href="#api">API Docs</a>
-                <a href="#privacy">Privacy</a>
-                <a href="#terms">Terms</a>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Google Sign-In Script -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="config.js"></script>
-    <script src="app.js?v=4" defer></script>
-</body>
+</script></body>
 
 </html>

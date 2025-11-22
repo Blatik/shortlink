@@ -1,0 +1,7 @@
+[build]
+target = "index.html"
+dist = "../docs"
+public_url = "/shortlink/"
+
+[watch]
+ignore = ["../docs"]

@@ -1,0 +1,89 @@
+/* Bar Chart Styles */
+.bar-chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 0;
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bar-label {
+    min-width: 120px;
+    font-size: 14px;
+    color: #64748b;
+    text-align: right;
+}
+
+.bar-track {
+    flex: 1;
+    height: 32px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 12px;
+    transition: width 0.3s ease;
+    border-radius: 6px;
+}
+
+.bar-value {
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: #1e293b;
+}
+
+.analytics-dashboard {
+    margin-top: 32px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 32px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.stat-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.big-number {
+    font-size: 48px;
+    font-weight: 700;
+    margin: 0;
+}

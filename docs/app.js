@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("App initialized");
 
     // API endpoint
-    const API_URL = 'https://s.blatik-short.workers.dev';
+    // API endpoint
+    const API_URL = typeof CONFIG !== 'undefined' ? CONFIG.API_URL : 'https://s.blatik-short.workers.dev';
 
     // DOM elements
     const form = document.getElementById('shortenForm');

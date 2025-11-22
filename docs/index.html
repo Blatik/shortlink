@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener - Швидке скорочення посилань 🔗</title>
+    <meta name="description"
+        content="Безкоштовний сервіс скорочення URL з аналітикою кліків. Створюйте короткі посилання за секунди!">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Hero Section -->
+    <div class="container">
+        <header class="hero">
+            <h1>🔗 URL Shortener</h1>
+            <p class="subtitle">Скорочуйте посилання. Відстежуйте кліки. Заробляйте більше.</p>
+        </header>
+
+        <!-- Main Shortener Form -->
+        <div class="shortener-card">
+            <form id="shortenForm">
+                <div class="input-group">
+                    <input type="url" id="urlInput" placeholder="Вставте ваше довге посилання тут..." required>
+                    <button type="submit" class="btn-primary">
+                        <span class="btn-text">Скоротити</span>
+                        <span class="btn-loading" style="display: none;">⏳</span>
+                    </button>
+                </div>
+
+                <div class="advanced-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="customAliasToggle">
+                        <span>Власний alias</span>
+                    </label>
+                    <input type="text" id="customAlias" placeholder="my-custom-link" style="display: none;"
+                        pattern="[a-zA-Z0-9_-]{3,20}">
+                </div>
+            </form>
+
+            <!-- Result Display -->
+            <div id="result" class="result" style="display: none;">
+                <div class="result-content">
+                    <label>Ваше коротке посилання:</label>
+                    <div class="short-url-display">
+                        <input type="text" id="shortUrlInput" readonly>
+                        <button id="copyBtn" class="btn-copy">
+                            📋 Копіювати
+                        </button>
+                    </div>
+                    <div class="result-stats">
+                        <span>✅ Створено успішно!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Блискавична швидкість</h3>
+                <p>Редіректи за <50мс завдяки Cloudflare Workers</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Детальна аналітика</h3>
+                <p>Відстежуйте кліки, географію, джерела трафіку</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>API для розробників</h3>
+                <p>Інтегруйте в свої додатки через REST API</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Безкоштовний старт</h3>
+                <p>100 посилань/місяць абсолютно безкоштовно</p>
+            </div>
+        </div>
+
+        <!-- Pricing Section -->
+        <div class="pricing-section">
+            <h2>Тарифні плани</h2>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">$0<span>/міс</span></div>
+                    <ul class="features-list">
+                        <li>✅ 100 посилань/місяць</li>
+                        <li>✅ Базова аналітика (7 днів)</li>
+                        <li>✅ Стандартна підтримка</li>
+                        <li>❌ Власні домени</li>
+                        <li>❌ API доступ</li>
+                    </ul>
+                    <button class="btn-outline">Почати безкоштовно</button>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="badge">Популярний</div>
+                    <h3>Pro</h3>
+                    <div class="price">$9<span>/міс</span></div>
+                    <ul class="features-list">
+                        <li>✅ 10,000 посилань/місяць</li>
+                        <li>✅ Розширена аналітика (90 днів)</li>
+                        <li>✅ Власні домени</li>
+                        <li>✅ API доступ</li>
+                        <li>✅ Пріоритетна підтримка</li>
+                    </ul>
+                    <button class="btn-primary">Оновити до Pro</button>
+                </div>
+
+                <div class="pricing-card">
+                    <h3>Business</h3>
+                    <div class="price">$29<span>/міс</span></div>
+                    <ul class="features-list">
+                        <li>✅ Необмежено посилань</li>
+                        <li>✅ Повна аналітика (365 днів)</li>
+                        <li>✅ Власні домени</li>
+                        <li>✅ API доступ</li>
+                        <li>✅ Пріоритетна підтримка 24/7</li>
+                    </ul>
+                    <button class="btn-outline">Зв'язатися з нами</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Створено з 🦀 Rust + Cloudflare Workers</p>
+            <div class="footer-links">
+                <a href="#api">API Документація</a>
+                <a href="#privacy">Конфіденційність</a>
+                <a href="#terms">Умови використання</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
